@@ -1,0 +1,453 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description"
+          content="Plataforma de optimización del problema del vendedor viajero mediante algoritmos genéticos.">
+
+    <title>Genetic TSP Optimizer</title>
+
+    <link rel="stylesheet" href="/static/css/styles.css">
+
+    <script src="/static/js/matrix.js" defer></script>
+    <script src="/static/js/csv_import.js" defer></script>
+    <script src="/static/js/api.js" defer></script>
+    <script src="/static/js/results.js" defer></script>
+    <script src="/static/js/charts.js" defer></script>
+    <script src="/static/js/route_graph.js" defer></script>
+    <script src="/static/js/app.js" defer></script>
+</head>
+
+<body>
+
+<div class="app-container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">
+                <span>G</span>
+            </div>
+
+            <div class="brand-text">
+                <h1>GENETIC TSP</h1>
+                <span>OPTIMIZATION ENGINE</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <span class="nav-label">WORKSPACE</span>
+
+            <a href="#dashboard" class="nav-item active">
+                <span>◈</span> Dashboard
+            </a>
+
+            <a href="#problem-section" class="nav-item">
+                <span>▦</span> Problema TSP
+            </a>
+
+            <a href="#configuration-section" class="nav-item">
+                <span>⚙</span> Configuración
+            </a>
+
+            <a href="#results-section" class="nav-item">
+                <span>⌁</span> Resultados
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="system-card">
+                <div class="system-indicator">
+                    <span id="api-indicator" class="status-dot offline"></span>
+                    <span id="api-status">Verificando API...</span>
+                </div>
+
+                <span class="system-description">
+                    Backend connection
+                </span>
+            </div>
+
+            <div class="sidebar-version">
+                GENETIC TSP OPTIMIZER
+                <span>Version 1.0.0</span>
+            </div>
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content" id="dashboard">
+
+        <!-- HEADER -->
+        <header class="topbar">
+
+            <div>
+                <span class="breadcrumb">WORKSPACE / DASHBOARD</span>
+                <h2>Panel de optimización</h2>
+                <p>Configuración y análisis del problema del vendedor viajero.</p>
+            </div>
+
+            <div class="topbar-right">
+                <span class="environment-badge">
+                    <span class="status-dot online"></span>
+                    LOCAL ENVIRONMENT
+                </span>
+            </div>
+
+        </header>
+
+
+        <!-- KPI CARDS -->
+        <section class="kpi-grid">
+
+            <article class="kpi-card">
+                <div class="kpi-header">
+                    <span>CIUDADES</span>
+                    <span class="kpi-icon">⌖</span>
+                </div>
+
+                <strong id="city-count">0</strong>
+                <small>Ciudades registradas</small>
+            </article>
+
+            <article class="kpi-card">
+                <div class="kpi-header">
+                    <span>GENERACIONES</span>
+                    <span class="kpi-icon">↗</span>
+                </div>
+
+                <strong id="generation-count">500</strong>
+                <small>Configuración evolutiva</small>
+            </article>
+
+            <article class="kpi-card">
+                <div class="kpi-header">
+                    <span>MEJOR COSTO</span>
+                    <span class="kpi-icon">◎</span>
+                </div>
+
+                <strong id="best-cost">--</strong>
+                <small>Mejor recorrido encontrado</small>
+            </article>
+
+            <article class="kpi-card">
+                <div class="kpi-header">
+                    <span>ESTADO</span>
+                    <span class="kpi-icon">◉</span>
+                </div>
+
+                <strong id="optimization-status" class="status-text">
+                    IDLE
+                </strong>
+                <small>Estado del optimizador</small>
+            </article>
+
+        </section>
+
+
+        <!-- PROBLEM CONFIGURATION -->
+        <section class="panel" id="problem-section">
+
+            <div class="panel-header">
+                <div>
+                    <span class="section-tag">01 / INPUT DATA</span>
+                    <h3>Definición del problema</h3>
+                    <p>Configura las ciudades y sus conexiones.</p>
+                </div>
+            </div>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="city-name">Nombre de la ciudad</label>
+
+                    <div class="input-action">
+                        <input
+                            type="text"
+                            id="city-name"
+                            placeholder="Ej. Bogotá"
+                            maxlength="60"
+                        >
+
+                        <button type="button" id="add-city-btn"
+                                class="btn btn-secondary">
+                            + Agregar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="matrix-type">Tipo de matriz</label>
+
+                    <select id="matrix-type">
+                        <option value="symmetric">Simétrica</option>
+                        <option value="asymmetric">Asimétrica</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="start-city">Ciudad de origen</label>
+
+                    <select id="start-city">
+                        <option value="">Sin ciudades</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="city-list-container">
+                <div class="subsection-header">
+                    <h4>Ciudades registradas</h4>
+                    <span id="city-list-count">0 ciudades</span>
+                </div>
+
+                <div id="city-list" class="city-list">
+                    <p class="empty-message">
+                        Agrega ciudades para comenzar.
+                    </p>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="subsection-header">
+                <div>
+                    <h4>Matriz de distancias</h4>
+                    <p>Define el costo de desplazamiento entre ciudades.</p>
+                </div>
+
+                <div class="matrix-actions">
+                    <button type="button" id="generate-matrix-btn"
+                            class="btn btn-secondary">
+                        Generar matriz
+                    </button>
+
+                    <button type="button" id="clear-matrix-btn"
+                            class="btn btn-danger-outline">
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <div class="matrix-wrapper">
+                <div id="matrix-container" class="matrix-container">
+                    <div class="matrix-empty">
+                        <span>▦</span>
+                        <p>La matriz aparecerá aquí.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="matrix-footer">
+                <div class="matrix-legend">
+                    <span class="legend-item">
+                        <span class="legend-color diagonal"></span>
+                        Diagonal principal = 0
+                    </span>
+
+                    <span class="legend-item">
+                        <span class="legend-color missing"></span>
+                        Conexión inexistente = vacío
+                    </span>
+                </div>
+
+                <div class="csv-actions">
+                    <label for="csv-file" class="btn btn-secondary">
+                        Importar CSV
+                    </label>
+
+                    <input
+                        type="file"
+                        id="csv-file"
+                        accept=".csv,text/csv"
+                        hidden
+                    >
+
+                    <button type="button" id="export-csv-btn"
+                            class="btn btn-secondary">
+                        Exportar CSV
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- GENETIC CONFIGURATION -->
+        <section class="panel" id="configuration-section">
+
+            <div class="panel-header">
+                <div>
+                    <span class="section-tag">02 / ENGINE SETTINGS</span>
+                    <h3>Configuración genética</h3>
+                    <p>Define los parámetros del algoritmo de optimización.</p>
+                </div>
+            </div>
+
+            <div class="config-grid">
+
+                <div class="form-group">
+                    <label for="population-size">Tamaño de población</label>
+                    <input type="number" id="population-size"
+                           min="1" value="150">
+                </div>
+
+                <div class="form-group">
+                    <label for="generations">Generaciones</label>
+                    <input type="number" id="generations"
+                           min="1" value="500">
+                </div>
+
+                <div class="form-group">
+                    <label for="crossover-rate">Probabilidad de cruce</label>
+                    <input type="number" id="crossover-rate"
+                           min="0" max="1" step="0.01" value="0.85">
+                </div>
+
+                <div class="form-group">
+                    <label for="mutation-rate">Probabilidad de mutación</label>
+                    <input type="number" id="mutation-rate"
+                           min="0" max="1" step="0.01" value="0.15">
+                </div>
+
+                <div class="form-group">
+                    <label for="elite-rate">Porcentaje de elitismo</label>
+                    <input type="number" id="elite-rate"
+                           min="0.01" max="0.99" step="0.01" value="0.05">
+                </div>
+
+                <div class="form-group">
+                    <label for="tournament-size">Tamaño del torneo</label>
+                    <input type="number" id="tournament-size"
+                           min="1" value="3">
+                </div>
+
+                <div class="form-group">
+                    <label for="random-seed">Semilla aleatoria</label>
+                    <input type="number" id="random-seed"
+                           placeholder="Opcional">
+                </div>
+
+                <div class="form-group">
+                    <label for="two-opt">Búsqueda local 2-opt</label>
+                    <select id="two-opt">
+                        <option value="false">Desactivada</option>
+                        <option value="true">Activada</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="optimization-actions">
+
+                <div class="optimization-info">
+                    <span class="status-dot online"></span>
+                    Motor genético disponible
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" id="validate-btn"
+                            class="btn btn-secondary">
+                        Validar problema
+                    </button>
+
+                    <button type="button" id="optimize-btn"
+                            class="btn btn-primary">
+                        <span>▶</span> Ejecutar optimización
+                    </button>
+                </div>
+
+            </div>
+
+            <div id="feedback-message" class="feedback-message"
+                 role="status" aria-live="polite"></div>
+
+        </section>
+
+
+        <!-- RESULTS -->
+        <section class="panel" id="results-section">
+
+            <div class="panel-header">
+                <div>
+                    <span class="section-tag">03 / ANALYTICS</span>
+                    <h3>Resultados de optimización</h3>
+                    <p>Visualización de la solución obtenida.</p>
+                </div>
+            </div>
+
+            <div class="results-grid">
+
+                <div class="result-card">
+                    <span>COSTO TOTAL</span>
+                    <strong id="result-cost">--</strong>
+                </div>
+
+                <div class="result-card">
+                    <span>MEJOR GENERACIÓN</span>
+                    <strong id="result-generation">--</strong>
+                </div>
+
+                <div class="result-card">
+                    <span>CIUDADES RECORRIDAS</span>
+                    <strong id="result-cities">--</strong>
+                </div>
+
+            </div>
+
+            <div class="visualization-grid">
+
+                <article class="visual-card">
+                    <div class="visual-header">
+                        <h4>Grafo de ciudades</h4>
+                        <span>ROUTE VISUALIZATION</span>
+                    </div>
+
+                    <div id="graph-container" class="graph-container">
+                        <p>Ejecuta una optimización para visualizar la ruta.</p>
+                    </div>
+                </article>
+
+                <article class="visual-card">
+                    <div class="visual-header">
+                        <h4>Convergencia genética</h4>
+                        <span>FITNESS HISTORY</span>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="convergence-chart"></canvas>
+                    </div>
+                </article>
+
+            </div>
+
+            <article class="visual-card route-card">
+                <div class="visual-header">
+                    <h4>Secuencia de recorrido</h4>
+                    <span>OPTIMAL ROUTE</span>
+                </div>
+
+                <div id="route-sequence" class="route-sequence">
+                    <p>La ruta aparecerá después de la optimización.</p>
+                </div>
+            </article>
+
+        </section>
+
+
+        <footer class="footer">
+            <span>GENETIC TSP OPTIMIZER © 2026</span>
+            <span>POWERED BY PYTHON · FLASK · GENETIC ALGORITHMS</span>
+        </footer>
+
+    </main>
+
+</div>
+
+</body>
+</html>
